@@ -129,10 +129,10 @@ export const additionalNewsData = [
   }
 ];
 export const socialIcons=[
-  {icon:FaFacebook,link:""},
-  {icon:FaInstagram,link:""},
-  {icon:FaYoutube,link:""},
-  {icon:FaLinkedin,link:""},
+  {icon:FaFacebook,link:"#"},
+  {icon:FaInstagram,link:"#"},
+  {icon:FaYoutube,link:"#"},
+  {icon:FaLinkedin,link:"#"},
 ]
 
 export const features=[
@@ -168,7 +168,7 @@ export const features=[
 ]
 export const contactForm=[
   {label:'Full Name',name:'name',type:'text',placeholder:'Enter your full name',Icon:FiUser},
-   {label:'Phone Number',name:'phone',type:'tel',placeholder:'+(212)6 65 66 35 20',Icon:FiPhone},
-    {label:'Email Address',name:'email',type:'text',placeholder:'your.email@gmail.com',Icon:FiMail},
+   {label:'Phone Number',name:'phone',type:'tel',placeholder:'+(212)* ** ** ** **',Icon:FiPhone},
+    {label:'Email Address',name:'email',type:'text',placeholder:'youremail@gmail.com',Icon:FiMail},
     
 ]

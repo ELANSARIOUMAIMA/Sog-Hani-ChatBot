@@ -25,12 +25,12 @@ const Banner = () => {
               We're Here
               <br />
               <span className="text-[#FFF200] bg-gradient-to-r from-[#303481] to-[#FFF200] bg-clip-text">
-                SOG Hani
+                SOG-Hani
               </span>
             </h1>
 
             <p className="text-[#303481] text-lg sm:text-xl lg:text-xl font-playfair italic max-w-xl opacity-90 mx-auto md:mx-0">
-              Learn to drive safely, master road rules, and become a confident driver with SOG Hani.
+              Learn to drive safely, master road rules, and become a confident driver with SOG-Hani.
             </p>
 
             {/* SEARCH BAR */}
@@ -63,7 +63,8 @@ const Banner = () => {
               </button>
 
               <button
-                onClick={() => setShowVideo(true)}
+                onClick={() => setShowVideo(false)}
+                // if you want to see the video you must to replace **false** by **true**
                 className="group flex items-center gap-3 bg-gradient-to-r from-[#303481] to-[#FFF200] hover:from-[#FFF200] hover:to-[#303481] px-6 py-3 rounded-xl transition-all duration-300 border-2 border-[#303481] backdrop-blur-sm"
               >
                 <FaPlay className="text-xl group-hover:animate-bounce text-[#FFF200]" />

@@ -49,12 +49,12 @@ const Contact = () => {
               {
                 title: "Our Headquarters",
                 icon: FiMapPin,
-                info: "Avenue Regragui, Rabat",
+                info: "*******, *****",
               },
               {
                 title: "Contact Number",
                 icon: FiPhone,
-                info: "+(212)6 65 66 35 20",
+                info: "+(212)6 ** ** ** **",
               },
               {
                 title: "Contact Email",

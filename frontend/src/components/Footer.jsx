@@ -6,10 +6,10 @@ import {socialIcons} from '../assets/assets.js'
 
 const Footer = () => {
   const navItems=[
-    {name:'Home',link:'/'},
-    {name:'News',link:'/news'},
-    {name:'About us',link:'/about'},
-    {name:'Contact',link:'/contact'},
+    {name:'Home',link:'#home'},
+    {name:'News',link:'#news'},
+    {name:'About us',link:'#about'},
+    {name:'Contact',link:'#contact'},
   ]
   const [email,setEmail]=useState('');
   const handleSubmit=(e)=>{
@@ -95,7 +95,7 @@ const Footer = () => {
           <div className="border-t  border-[#F5F5F5] pt-8 mt-8 text-center">
             <p className="text-[#FFF200] text-lg mb-2 ">
               |
-              &copy; 2025 SOG-HANI.All rights reserved.
+              &copy; {new Date().getFullYear()} SOG-HANI. All rights reserved.
             </p>
             <div className="group inline-block">
               <a href="https://elansariservives.vercel.app" 
@@ -104,6 +104,11 @@ const Footer = () => {
               className="text-lg bg-gradient-to-r from-[#FFF200] via-[#F5F5F5] to-[#FFF200] bg-clip-text text-transparent hover:text-purple-300 transition-all duration-500">
                 Designed by Elansariservices
               </a>
+              
+              <p  className="text-lg bg-gradient-to-r from-[#FFF200] via-[#F5F5F5] to-[#FFF200] bg-clip-text text-transparent hover:text-purple-300 transition-all duration-500">
+               & EL MLIJI Fatima Ezzahra
+            </p>
+              
             </div>
           </div>
       </div>

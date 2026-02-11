@@ -1,10 +1,10 @@
 
 export const companyInfo = `
 Project Title:
-SOG HANI — Intelligent Platform for Managing Road Needs in Morocco
+SOG-HANI — Intelligent Platform for Managing Road Needs in Morocco
 
 Introduction:
-SOG HANI is an innovative platform designed to enhance road safety and simplify legal and administrative procedures related to road traffic in the Rabat-Salé-Kénitra region. It provides smart assistance for legal inquiries, driving test preparation, and automated accident and insurance case management.
+SOG-HANI is an innovative platform designed to enhance road safety and simplify legal and administrative procedures related to road traffic in the Rabat-Salé-Kénitra region. It provides smart assistance for legal inquiries, driving test preparation, and automated accident and insurance case management.
 
 Objectives:
 - Facilitate access to legal road assistance for both local and foreign drivers.
@@ -35,7 +35,7 @@ Key Features:
 
 Regional Impact:
 In 2024, according to NARSA, Morocco recorded an alarming rise in road accidents, with 4,024 deaths and over 10,000 serious injuries — a 15.2% increase compared to 2023.  
-In response, SOG HANI aims to:
+In response, SOG-HANI aims to:
 - Reduce delays in victim assistance and administrative confusion after accidents.
 - Enhance prevention through continuous driver education and awareness.
 - Provide data-driven insights to help authorities shape safer road policies.
@@ -53,6 +53,6 @@ Future Developments:
 - Expansion to other Moroccan regions and additional language support.
 
 Contact / Additional Information:
-Developed by a team of local engineers and innovators, SOG HANI is available for demos, regional pilot programs, and partnerships with local authorities and insurance companies.
+Developed by a team of local engineers and innovators, SOG-HANI is available for demos, regional pilot programs, and partnerships with local authorities and insurance companies.
 `;
 
