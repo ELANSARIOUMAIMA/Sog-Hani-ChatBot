@@ -14,14 +14,34 @@ const Login = ({ onLoginSuccess, onClose }) => {
     if(stored) setFormData(JSON.parse(stored))
   },[])
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault()
+     try {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: formData.username, password: formData.password })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('token', data.token); // save JWT
+      onLoginSuccess();
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Login failed');
+  }
+    
     formData.rememberMe ? localStorage.setItem('loginData', JSON.stringify(formData))
       : localStorage.removeItem('loginData')
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
     onLoginSuccess()
   }
+
   const handleChange = ({ target: { name, value, type, checked } }) =>
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox'? checked: value }))
 

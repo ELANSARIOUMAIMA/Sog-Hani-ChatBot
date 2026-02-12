@@ -3,6 +3,7 @@ import { FaArrowLeft, FaArrowRight, FaCheckCircle } from 'react-icons/fa'
 import { FaEyeSlash,FaEye } from 'react-icons/fa6'
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
+
 const AwesomeToast = ({ message, icon }) => (
   <div className="animate-slide-in fixed  bottom-6 right-6 flex items-center bg-gradient-to-br  from-[#303481] to-[#FFF200] px-6  py-4 rounded-lg shadow-lg border-2 border-[#FFF200] ">
     <span className="text-2xl mr-3  text-[#303481]">{icon}</span>
@@ -29,9 +30,30 @@ const SignUp = () => {
   }, [showToast, navigate])
 
   const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value })
+
   const toggleShowPassword = () => setShowPassword(prev => !prev)
-  const handleSubmit=e=>{
+
+  const handleSubmit=async e=>{
+
     e.preventDefault();
+
+    try {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      setShowToast(true);
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Registration failed');
+  }
     console.log('Sign Up Data:',formData)
     setShowToast(true)
 
