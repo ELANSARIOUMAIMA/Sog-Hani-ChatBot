@@ -11,29 +11,41 @@ const Chatbot = () => {
   const chatBodyRef = useRef();
   const [showChatbot, setShowChatbot] = useState(false);
 
+  // frontend/src/components/Chatbot.jsx
+// ONLY REPLACE the generateBotResponse function (lines ~17-47)
+
   const generateBotResponse = async (history) => {
     // Add a "thinking..." placeholder
     setChatHistory((prev) => [...prev, { role: "model", text: "Thinking..." }]);
 
-    const formatHistory = history.map(({ role, text }) => ({ role, parts: [{ text }] }));
+    // Get the last user message
+    const lastUserMessage = history.filter(msg => msg.role === "user").pop();
+    
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: formatHistory }),
+      body: JSON.stringify({ question: lastUserMessage.text }),
     };
 
     try {
       const response = await fetch(import.meta.env.VITE_API_URL, requestOptions);
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || "Something went wrong!");
+      
+      if (!response.ok) throw new Error(data.error || "Something went wrong!");
 
-      const apiResponseText = data.candidates[0].content.parts[0].text
-        .replace(/\*\*(.*?)\*\*/g, "$1")
-        .trim();
+      // Get answer and sources
+      const answer = data.answer.trim();
+      const sources = data.sources || [];
+      
+      // Format answer with sources
+      let displayText = answer;
+      if (sources.length > 0) {
+        displayText += `\n\n📚 المصادر: ${sources.map(s => `المادة ${s}`).join(', ')}`;
+      }
 
       setChatHistory((prev) => [
         ...prev.filter((msg) => msg.text !== "Thinking..."),
-        { role: "model", text: apiResponseText },
+        { role: "model", text: displayText },
       ]);
     } catch (error) {
       console.error(error);
@@ -43,7 +55,7 @@ const Chatbot = () => {
       ]);
     }
   };
-
+  
   // Auto-scroll
   useEffect(() => {
     if (showChatbot && chatBodyRef.current) {

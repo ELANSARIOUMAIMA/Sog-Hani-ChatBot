@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 
 const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse }) => {
-  const inputRef = useRef('');
+  const inputRef = useRef();
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -13,15 +13,12 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse }) => {
     inputRef.current.value = '';
 
     // Update chat history with the user's message
-    setChatHistory((history) => [...history, { role: 'user', text: userMessage }]);
+    const newHistory = [...chatHistory, { role: 'user', text: userMessage }];
+    setChatHistory(newHistory);
 
-    // Delay 600ms before showing "Thinking..." and generating response
+    // Delay 600ms before generating response
     setTimeout(() => {
-      // Add a "Thinking..." placeholder for the bot's response
-      setChatHistory((history) => [...history, { role: 'model', text: 'Thinking...' }]);
-      
-      // Generate bot response
-      generateBotResponse([...chatHistory, { role: 'user', text: `Using the detalis provides above,please address this query: ${userMessage }`}]);
+      generateBotResponse(newHistory);
     }, 600);
   };
 
