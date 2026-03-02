@@ -1,5 +1,6 @@
 # backend/app.py - Simple Flask Backend
 
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from rag_system import RAGSystem
@@ -58,14 +59,15 @@ def health():
     })
 
 if __name__ == '__main__':
+    port = int(os.getenv('PORT', 5000))
     print("="*60)
     print("🚀 Moroccan Highway Code RAG Server")
     print("="*60)
-    print("📡 Endpoint: http://localhost:5000/api/ask")
-    print("🏥 Health:   http://localhost:5000/api/health")
+    print(f"📡 Endpoint: http://localhost:{port}/api/ask")
+    print(f"🏥 Health:   http://localhost:{port}/api/health")
     print("="*60)
-    print("\nSet in frontend/.env:")
-    print("VITE_API_URL=http://localhost:5000/api/ask\n")
+    print("\nSet in frontend/.env.local:")
+    print(f"VITE_API_URL=http://localhost:{port}/api/ask\n")
     print("="*60)
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)
