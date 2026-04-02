@@ -1,22 +1,19 @@
-import React, { useState, useRef, useEffect } from "react";
-import { GiRoad, GiSteeringWheel } from "react-icons/gi";
+import React, { useState, useRef, useEffect, useContext } from "react";
+import { GiSteeringWheel } from "react-icons/gi";
 import { FaCarRear, FaNewspaper } from "react-icons/fa6";
 import { FiHome, FiStar, FiPhone, FiLogOut, FiKey } from "react-icons/fi";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import Login from "../components/Login.jsx";
+import { useLocation, useNavigate } from "react-router-dom";
+import Login from "../pages/loginPage";
+import { AppContext } from "../context/AppContext";
 
 const Navbar = () => {
+
   const [isOpen, setIsOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    Boolean(localStorage.getItem("loginData"))
-  );
-
-
-   const [isScrolled, setIsScrolled] = useState(false);
+  const { token, setToken } = useContext(AppContext)
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,24 +31,25 @@ const Navbar = () => {
 
   // Mettre à jour login modal + auth quand le path change
   useEffect(() => {
-    setShowLoginModal(location.pathname === "/login");
-    setIsAuthenticated(Boolean(localStorage.getItem("loginData")));
+    setShowLoginModal(location.pathname === "/loginPage");
+    setToken(Boolean(localStorage.getItem("token")));
   }, [location]);
 
   const handleLoginSuccess = () => {
-    localStorage.setItem("loginData", JSON.stringify({ loggedIn: true }));
-    setIsAuthenticated(true);
+    localStorage.setItem("token", JSON.stringify({ loggedIn: true }));
+    setToken(true);
     navigate("/");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("loginData");
-    setIsAuthenticated(false);
+    setToken(false)
+    localStorage.removeItem("token");
+    
   };
 
   // Bouton Desktop Auth
   const renderDesktopAuthButton = () => {
-    return isAuthenticated ? (
+    return token ? (
       <button
         onClick={handleLogout}
         className="px-3 md:px-3 lg:px-6 py-1.5 md:py-2 lg:py-3 bg-gradient-to-br from-[#D6E6F2] to-[#FFF200] text-[#303481] rounded-2xl font-bold hover:shadow-lg hover:shadow-[#D6E6F2] transition-all
@@ -63,7 +61,7 @@ const Navbar = () => {
       </button>
     ) : (
       <button
-        onClick={() => navigate("/login")}
+        onClick={() => navigate("/loginPage")}
         className="px-3 md:px-3 lg:px-6 py-1.5 md:py-2 lg:py-3 bg-gradient-to-br from-[#D6E6F2] to-[#FFF200] text-[#303481] rounded-2xl font-bold hover:shadow-lg hover:shadow-[#D6E6F2] transition-all
         transform hover:scale-[1.02] border-2 border-[#303481] flex items-center space-x-2
         shadow-md shadow-[#303481] text-xs md:text-sm lg:text-sm"
@@ -76,25 +74,26 @@ const Navbar = () => {
 
   // Bouton Mobile Auth
   const renderMobileAuthButton = () => {
-    return isAuthenticated ? (
+    return token ? (
+      
       <>
-      <button
-        onClick={handleLogout}
-        className="w-full px-4 py-3 bg-gradient-to-br from-[#D6E6F2] to-[#FFF200] 
+        <button
+          onClick={handleLogout}
+          className="w-full px-4 py-3 bg-gradient-to-br from-[#D6E6F2] to-[#FFF200] 
         text-[#2D1B0E] rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm"
-      >
-        <FiLogOut className="text-base md:text-lg lg:text-lg" />
-        <span className="text-shadow">Logout</span>
-      </button>
-      
+        >
+          <FiLogOut className="text-base md:text-lg lg:text-lg" />
+          <span className="text-shadow">Logout</span>
+        </button>
+
       </>
-      
-      
+
+
 
     ) : (
       <button
         onClick={() => {
-          navigate("/login");
+          navigate("/loginPage");
           setIsOpen(false);
         }}
         className="w-full px-4 py-3 bg-gradient-to-br from-[#D6E6F2] to-[#FFF200] 
@@ -124,22 +123,24 @@ const Navbar = () => {
     }
   };
 
+
+
   return (
 
-    
+
     <nav
-      
-     className={`fixed  bg-[#F5F5F5] w-full z-50 transition-all duration-300 ${
-        isScrolled
+
+      className={`fixed  bg-[#F5F5F5] w-full z-50 transition-all duration-300 ${isScrolled
           ? "py-2 bg-white/80 backdrop-blur-md shadow-md"
           : "py-1 bg-transparent"
-      }`}
-      
+        }`}
+
       role="navigation"
       aria-label="Main navigation"
     >
       {/* MAIN NAVIGATION */}
       <div className="max-w-7xl mx-auto px-4 relative">
+
         <div className="flex justify-between items-center h-16 md:h-20 lg:h-24">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center space-x-2 relative">
