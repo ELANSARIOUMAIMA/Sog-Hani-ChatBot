@@ -2,7 +2,8 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from rag_system import RAGSystem
+#from rag_system import RAGSystem
+from rag_system_groq import RAGSystem
 
 app = Flask(__name__)
 CORS(app)  # Allow frontend to connect
@@ -68,4 +69,5 @@ if __name__ == '__main__':
     print("VITE_API_URL=http://localhost:5000/api/ask\n")
     print("="*60)
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    #app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False) 

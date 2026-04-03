@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import ChatbotIcon from "./ChatbotIcon.jsx";
 import ChatForm from "./ChatForm.jsx";
 import ChatMessage from "./ChatMessage.jsx";
 import { companyInfo } from "./companyInfo.js";
+import { AppContext } from "../context/AppContext.jsx";
 
 const Chatbot = () => {
+  const { apiUrl } = useContext(AppContext);
   const [chatHistory, setChatHistory] = useState([
     { hideInChat: true, role: "model", text: companyInfo },
   ]);
@@ -12,24 +14,24 @@ const Chatbot = () => {
   const [showChatbot, setShowChatbot] = useState(false);
 
   const generateBotResponse = async (history) => {
-    // Add a "thinking..." placeholder
-    setChatHistory((prev) => [...prev, { role: "model", text: "Thinking..." }]);
-
-    const formatHistory = history.map(({ role, text }) => ({ role, parts: [{ text }] }));
-    const requestOptions = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: formatHistory }),
-    };
+   
+    // Get the last user message
+    const lastUserMessage = history.filter(msg => msg.role === "user").pop();
+    if (!lastUserMessage) return;
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL, requestOptions);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || "Something went wrong!");
+     
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: lastUserMessage.text }),
+      });
 
-      const apiResponseText = data.candidates[0].content.parts[0].text
-        .replace(/\*\*(.*?)\*\*/g, "$1")
-        .trim();
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Something went wrong!");
+
+       const apiResponseText = `${data.answer}\n\n📚 Sources: Articles ${data.sources.join(", ")}`;
 
       setChatHistory((prev) => [
         ...prev.filter((msg) => msg.text !== "Thinking..."),

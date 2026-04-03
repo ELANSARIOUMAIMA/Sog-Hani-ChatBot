@@ -6,6 +6,8 @@ const AppContextProvider = (props) => {
 
   const currencySymbol = "$";
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  // here wa can add the apiChatBotUrl
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   const [token, setToken] = useState('');
 
@@ -21,6 +23,7 @@ const AppContextProvider = (props) => {
   const value = {
     currencySymbol,
     backendUrl,
+    apiUrl, 
     token,setToken,
   };
 
