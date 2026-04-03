@@ -33,7 +33,7 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse }) => {
       <input
         ref={inputRef}
         type="text"
-        placeholder="SOG-HANI in your services..."
+        placeholder="SOG-HANI is at your service ..."
         className="flex-1 bg-transparent border-none text-[#303481] text-sm px-3 py-2 outline-none rounded-full"
       />
       <button
