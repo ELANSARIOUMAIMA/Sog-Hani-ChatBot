@@ -7,3 +7,5 @@ torch
 accelerate
 bitsandbytes
 numpy
+gunicorn
+groq
