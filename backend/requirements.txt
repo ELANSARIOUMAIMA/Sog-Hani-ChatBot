@@ -2,10 +2,6 @@ flask
 flask-cors
 sentence-transformers
 faiss-cpu
-#transformers
-#torch
-#accelerate
-#bitsandbytes
 numpy
 gunicorn
 groq
