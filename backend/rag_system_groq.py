@@ -25,7 +25,8 @@ class RAGSystem:
         self.index = faiss.deserialize_index(vector_db_package['index'])
         self.articles = vector_db_package['articles']
 
-        model_name = vector_db_package['model_name']
+        #model_name = vector_db_package['model_name']
+        model_name = "all-MiniLM-L6-v2"
         self.embedding_model = SentenceTransformer(model_name)
 
         print(f"     ✓ {len(self.articles)} articles loaded")
