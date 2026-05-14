@@ -32,6 +32,8 @@ class RAGSystem:
 
     def _load_llm(self):
         api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("❌ GROQ_API_KEY not found in .env file!")
         self.client = Groq(api_key=api_key)
         self.model_name = "llama-3.1-8b-instant"
         print(f"     ✓ Groq model ready: {self.model_name}")
@@ -42,10 +44,12 @@ class RAGSystem:
 
         results = []
         for idx in indices[0]:
+            if idx == -1:  # FAISS returns -1 when no result found
+                continue
             article = self.articles[idx]
             results.append({
-                'article_number': article['article_number'],
-                'content': article['cleaned_content']
+                'article_number': article.get('article_number', 'N/A'),
+                'content': article.get('cleaned_content') or article.get('content') or article.get('text', '')
             })
         return results
 
@@ -85,6 +89,14 @@ class RAGSystem:
 
     def query(self, question: str, top_k: int = 3) -> Dict:
         retrieved_articles = self.retrieve(question, top_k)
+
+        if not retrieved_articles:
+            return {
+                'answer': 'لم يتم العثور على مواد قانونية ذات صلة بسؤالك.',
+                'sources': [],
+                'retrieved_articles': []
+            }
+
         answer = self.generate(question, retrieved_articles)
         sources = [str(article['article_number']) for article in retrieved_articles]
 

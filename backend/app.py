@@ -1,8 +1,8 @@
 # backend/app.py - Simple Flask Backend
 
+import traceback
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-#from rag_system import RAGSystem
 from rag_system_groq import RAGSystem
 
 app = Flask(__name__)
@@ -24,32 +24,38 @@ def home():
 def ask():
     """
     Simple endpoint for questions
-    
+
     Request:  {"question": "ما هو السن الأدنى؟"}
     Response: {"answer": "...", "sources": ["11", "10"]}
     """
     try:
-        data = request.get_json()
-        question = data.get('question', '')
-        
+        data = request.get_json(force=True, silent=True)
+
+        if not data:
+            return jsonify({'error': 'Invalid or missing JSON body'}), 400
+
+        question = data.get('question', '').strip()
+
         if not question:
             return jsonify({'error': 'No question provided'}), 400
-        
+
         print(f"📝 Question: {question}")
-        
+
         # Get answer from RAG
         result = rag.query(question, top_k=3)
-        
+
         print(f"✅ Answer generated\n")
-        
+
         return jsonify({
             'answer': result['answer'],
             'sources': result['sources']
         })
-    
+
     except Exception as e:
-        print(f"❌ Error: {str(e)}\n")
+        print(f"❌ Error: {str(e)}")
+        print(traceback.format_exc())  # shows exact file + line number
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -68,6 +74,5 @@ if __name__ == '__main__':
     print("\nSet in frontend/.env:")
     print("VITE_API_URL=http://localhost:5000/api/ask\n")
     print("="*60)
-    
-    #app.run(host='0.0.0.0', port=5000, debug=True)
-    app.run(host='0.0.0.0', port=5000, debug=False) 
+
+    app.run(host='0.0.0.0', port=5000, debug=False)
