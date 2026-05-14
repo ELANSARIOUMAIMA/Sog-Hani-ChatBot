@@ -26,9 +26,19 @@ const Chatbot = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: lastUserMessage.text }),
       });
+      const text=await response.text();
+      console.log("RAW RESPONSE:", text);  // 👈 add this
+      console.log("STATUS:", response.status);
+      let data;
+      try {
+        data = JSON.parse(text);
+      }catch (err) {
+        throw new Error("Backend did not return valid JSON. Response: " + text);
+      }
+
 
       
-      const data = await response.json();
+      //const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Something went wrong!");
 
        const apiResponseText = `${data.answer}\n\n📚 Sources: Articles ${data.sources.join(", ")}`;
