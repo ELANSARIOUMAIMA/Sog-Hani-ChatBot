@@ -1,0 +1,17 @@
+# Dependencies (reinstalled inside container)
+node_modules/
+
+# Secrets
+.env
+
+# Dev/lint config
+eslint.config.js
+vercel.json
+
+# Docs
+README.md
+
+# Just in case
+dist/
+*.log
+.git/

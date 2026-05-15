@@ -1,12 +1,10 @@
 flask
 flask-cors
-sentence-transformers
-faiss-cpu
-#transformers
-#torch
-#accelerate
-#bitsandbytes
 numpy
-gunicorn
 groq
 python-dotenv
+gunicorn
+faiss-cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+sentence-transformers

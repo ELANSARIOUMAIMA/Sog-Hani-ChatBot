@@ -1,0 +1,29 @@
+#  it tells Docker what NOT to copy when you do COPY . .
+# Never copy these into the container:
+
+# Python
+__pycache__/                        
+*.py[cod]
+*.pyc                              
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/                              
+env/
+.venv/
+
+# Environment files (injected at runtime)
+.env                                
+
+# Dev files
+*.md                                
+.git/                               
+.gitignore                          
+
+# Old RAG system
+rag_system.py                       
