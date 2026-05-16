@@ -1,1 +1,42 @@
- 
+services:
+
+  backend:
+    build: ./backend
+    image: soghani-chatbot-backend:1
+    container_name: soghani-backend
+    ports:
+      - "8000:5000"
+    env_file:
+      - ./backend/.env
+    restart: always
+    networks:
+      - soghani-network
+
+  frontend:
+    build: ./frontend
+    image: soghani-frontend:1
+    container_name: soghani-frontend
+    ports:
+      - "8001:80"
+    restart: always
+    networks:
+      - soghani-network
+    depends_on:
+      - backend
+      - server
+
+  server:
+    build: ./server
+    image: soghani-server:1
+    container_name: soghani-server
+    ports:
+      - "8002:4000"
+    env_file:
+      - ./server/.env
+    restart: always
+    networks:
+      - soghani-network
+
+networks:
+  soghani-network:
+    driver: bridge
