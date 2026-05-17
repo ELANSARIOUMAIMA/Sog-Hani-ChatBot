@@ -1,0 +1,110 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    environment {
+        IMAGE_TAG          = 'latest'
+        DOCKERHUB_USERNAME = 'elansarioumaima'
+        GROQ_API_KEY       = credentials('groq-api-key')
+        JWT_SECRET         = credentials('jwt-secret')
+        MONGODB_URI        = credentials('mongodb-uri')
+    }
+
+    stages {
+
+        stage('Git Checkout') {
+            steps {
+                echo '📥 Checking out main branch...'
+                git branch: 'staging',
+                    //Staging = Test Environment Before Production
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/ELANSARIOUMAIMA/Sog-Hani-ChatBot'
+            }
+        }
+
+        stage('Pull Docker Images') {
+            steps {
+                echo '📦 Pulling Docker images from DockerHub...'
+                script {
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh """
+                        docker pull ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG}
+                        docker pull ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG}
+                        docker pull ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Containers') {
+            steps {
+                echo '🚀 Deploying with Docker Compose...'
+                sh """
+                docker compose down
+                docker compose up -d
+                """
+            }
+        }
+        stage('Health Check') {
+            steps {
+                echo '🏥 Waiting for services to be ready...'
+                sh """
+                echo 'Waiting for backend...'
+                until curl -sf http://localhost:8000/api/health; do
+                    echo 'Not ready yet, waiting 10 seconds...'
+                    sleep 10
+                done
+                echo '✅ Backend ready!'
+                curl -f http://localhost:8001 || exit 1
+                echo '✅ Frontend ready!'
+                curl -f http://localhost:8002 || exit 1
+                echo '✅ Server ready!'
+                """
+    }
+}
+
+        stage('Verify Running Containers') {
+            steps {
+                echo '🔍 Checking running containers...'
+                sh 'docker ps'
+            }
+        }
+    }
+
+       
+
+    post {
+        always {
+            script {
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+                def bannerColor = pipelineStatus.toUpperCase() == 'SUCCESS' ? 'green' : 'red'
+                def body = """
+                    <html><body>
+                    <div style="border: 4px solid ${bannerColor}; padding: 10px;">
+                    <h2>${jobName} - Build ${buildNumber}</h2>
+                    <div style="background-color: ${bannerColor}; padding: 10px;">
+                    <h3 style="color: white;">Pipeline Status: ${pipelineStatus.toUpperCase()}</h3>
+                    </div>
+                    <p>Check the <a href="${BUILD_URL}">console output</a>.</p>
+                    </div>
+                    </body></html>
+                """
+                emailext(
+                    subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus.toUpperCase()}",
+                    body: body,
+                    to: 'elansarioumaima93@gmail.com',
+                    mimeType: 'text/html'
+                )
+            }
+        }
+        success { echo '✅ CD Pipeline succeeded!' }
+        failure { echo '❌ CD Pipeline failed!' }
+    }
+}

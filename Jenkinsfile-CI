@@ -11,7 +11,7 @@ pipeline {
     environment{
         IMAGE_TAG="v${BUILD_NUMBER}"
         SCANNER_HOME= tool 'sonar-scanner'
-        NEXUS_IP     = '54.164.53.111'
+        NEXUS_IP     = '3.90.180.18'
         DOCKERHUB_USERNAME = 'elansarioumaima'
     }
 
@@ -107,6 +107,8 @@ pipeline {
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
                         sh "docker push ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG}"
+                        sh "docker tag ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG} ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:latest"
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:latest"
                     }
                 }
             }
@@ -184,6 +186,7 @@ pipeline {
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
                         sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG} ./frontend"
+                        
                     }
                 }
             }
@@ -204,6 +207,9 @@ pipeline {
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
                         sh "docker push ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG}"
+                        sh "docker tag ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG} ${DOCKERHUB_USERNAME}/soghani-frontend:latest"
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-frontend:latest"
+                        
                     }
                 }
             }
@@ -296,6 +302,8 @@ pipeline {
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
                         sh "docker push ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG}"
+                        sh "docker tag ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG} ${DOCKERHUB_USERNAME}/soghani-server:latest"
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-server:latest"
                     }
                 }
             }
