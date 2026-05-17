@@ -1,0 +1,343 @@
+pipeline {
+    agent any
+    options {
+        timestamps()        // ← shows time for each step
+        timeout(time: 2, unit: 'HOURS')  // ← stop if takes too long
+    }
+    tools {
+        nodejs 'NodeJS-20.19.0'  
+    }
+    
+    environment{
+        IMAGE_TAG="v${BUILD_NUMBER}"
+        SCANNER_HOME= tool 'sonar-scanner'
+        NEXUS_IP     = '54.164.53.111'
+        DOCKERHUB_USERNAME = 'elansarioumaima'
+    }
+
+    stages {
+        // =========================
+        // CHECKOUT
+        // =========================
+       
+        stage('Git Checkout') {
+            steps {
+                git branch: 'develop', credentialsId: 'github-credentials', url: 'https://github.com/ELANSARIOUMAIMA/Sog-Hani-ChatBot'
+            }
+        }
+        // =========================
+        // BACKEND SERVICE
+        // =========================
+        
+       
+        stage('Backend - Install Dependencies') {
+            steps {
+                
+                dir('backend') {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'nexus-credentials',
+                        usernameVariable: 'NEXUS_USER',
+                        passwordVariable: 'NEXUS_PASS'
+                        )]){
+                            sh """
+                            pip3 install -r requirements.txt --break-system-packages \
+                            --index-url http://${NEXUS_IP}:8081/repository/pypi-proxy/simple/ \
+                            --trusted-host ${NEXUS_IP}
+                            """
+                        }
+                }
+            }
+        }
+        // BACKEND SCAN
+        stage('Backend File System Scan') {
+            steps {
+                 echo '🔍 Scanning backend...'
+                 sh "trivy fs --format table -o trivy-fs-backend-report.html ./backend"
+            }
+        }
+        // BACKEND CODE QUALITY
+        stage('SonarQube Analysis - Backend') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                -Dsonar.projectName=soghani-chatbot-backend \
+                -Dsonar.projectKey=soghani-chatbot-backend \
+                -Dsonar.sources=./backend'''
+                    
+                }
+            }
+        }
+        // BACKEND PASS/FAIL
+        stage('Quality Gate - Backend') {
+    steps {
+        script {
+            waitForQualityGate(
+                abortPipeline: false, 
+                credentialsId: 'sonarqube-token'
+                ) 
+        }
+    }
+}
+        
+        
+        
+        // BACKEND BUILDING DOCKER IMAGE
+         stage('Backend - Build docker image') {
+            steps {
+                echo '🔨 Building backend image...'
+                script{
+                   withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG} ./backend"
+                    }
+                }
+            }
+        }
+         // BACKEND SCANING DOCKER IMAGE
+        
+        stage('Backend - Docker Image Scan') {
+            steps {
+                echo '🔍 Scanning backend image...'
+                sh "trivy image --format table -o trivy-backend-image-report.html ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG}"
+            }
+        }
+        // BACKEND PUSHING DOCKER IMAGE
+         stage('Backend -Push docker image') {
+            steps {
+                echo '🔨 Pushing backend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+         
+        
+        // =========================
+        // FRONTEND SERVICE
+        // =========================
+        
+       
+       stage('Frontend - Install Dependencies') {
+    steps {
+        dir('frontend') {
+
+            withCredentials([usernamePassword(
+                credentialsId: 'nexus-credentials',
+                usernameVariable: 'NEXUS_USER',
+                passwordVariable: 'NEXUS_PASS'
+            )]) {
+
+                sh """
+                cat > ~/.npmrc <<EOF
+                registry=http://${NEXUS_IP}:8081/repository/npm-proxy/
+                
+                //${NEXUS_IP}:8081/repository/npm-proxy/:username=\$NEXUS_USER
+                //${NEXUS_IP}:8081/repository/npm-proxy/:_password=\$(echo -n \$NEXUS_PASS | base64)
+                //${NEXUS_IP}:8081/repository/npm-proxy/:email=jenkins@example.com
+                //${NEXUS_IP}:8081/repository/npm-proxy/:always-auth=true
+                EOF
+                
+                npm install
+                """
+            }
+        }
+    }
+}
+
+        // FRONTEND SCAN
+        stage('frontend File System Scan') {
+            steps {
+                dir('frontend'){
+                    sh "trivy fs --format table -o trivy-fs-frontend-report.html ."
+                }
+            }
+        }
+        // FRONTEND CODE QUALITY
+        stage('SonarQube Analysis - Frontend') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                -Dsonar.projectName=soghani-chatbot-frontend \
+                -Dsonar.projectKey=soghani-chatbot-frontend \
+                -Dsonar.sources=./frontend'''
+                    
+                }
+            }
+        }
+        // FRONTEND PASS/FAIL
+        stage('Quality Gate - Frontend') {
+            steps {
+                script {
+                    waitForQualityGate (
+                        abortPipeline: false, 
+                        credentialsId: 'sonarqube-token'
+                        )
+                }
+            }
+        }
+        
+         // FRONTEND BUILDING DOCKER IMAGE
+         stage('Frontend - Build docker image') {
+            steps {
+                echo '🔨 Building backend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG} ./frontend"
+                    }
+                }
+            }
+        }
+        
+         // FRONTEND SCANING DOCKER IMAGE
+        
+        stage('Frontend - Docker Image Scan') {
+            steps {
+                echo '🔍 Scanning frontend image...'
+                sh "trivy image --format table -o trivy-frontend-image-report.html ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG}"
+            }
+        }
+        // FRONTEND PUSHING DOCKER IMAGE
+         stage('Frontend -Push docker image') {
+            steps {
+                echo '🔨 Pushing frontend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+        
+        // =========================
+        // SERVER SERVICE
+        // =========================
+        
+       stage('Server - Install Dependencies') {
+    steps {
+        dir('server') {
+            withCredentials([usernamePassword(
+                credentialsId: 'nexus-credentials',
+                usernameVariable: 'NEXUS_USER',
+                passwordVariable: 'NEXUS_PASS'
+            )]) {
+
+               
+                sh """
+                cat > ~/.npmrc <<EOF
+                registry=http://${NEXUS_IP}:8081/repository/npm-proxy/
+                
+                //${NEXUS_IP}:8081/repository/npm-proxy/:username=\$NEXUS_USER
+                //${NEXUS_IP}:8081/repository/npm-proxy/:_password=\$(echo -n \$NEXUS_PASS | base64)
+                //${NEXUS_IP}:8081/repository/npm-proxy/:email=jenkins@example.com
+                //${NEXUS_IP}:8081/repository/npm-proxy/:always-auth=true
+                EOF
+                
+                npm install
+                """
+            }
+        }
+    }
+}
+        // SERVER SCAN
+        stage('server File System Scan ') {
+            steps {
+                dir('server'){
+                    sh "trivy fs --format table -o trivy-fs-server-report.html ."
+                }
+            }
+        }
+        // SERVER CODE QUALITY
+        stage('SonarQube Analysis - Server') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                -Dsonar.projectName=soghani-chatbot-server \
+                -Dsonar.projectKey=soghani-chatbot-server \
+                -Dsonar.sources=./server'''
+                    
+                }
+            }
+        }
+        // SERVER PASS/FAIL
+        stage('Quality Gate - Server') {
+            steps {
+                script {
+                    waitForQualityGate (
+                        abortPipeline: false, 
+                        credentialsId: 'sonarqube-token'
+                        )
+                }
+            }
+        }
+        // SERVER BUILDING DOCKER IMAGE
+         stage('Server - Build docker image') {
+            steps {
+                echo '🔨 Building backend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG} ./server"
+                    }
+                }
+            }
+        }
+         // SERVER SCANING DOCKER IMAGE
+        
+        stage('Server - Docker Image Scan') {
+            steps {
+                echo '🔍 Scanning server image...'
+                sh "trivy image --format table -o trivy-server-image-report.html ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG}"
+            }
+        }
+        // FRONTEND PUSHING DOCKER IMAGE
+         stage('Server -Push docker image') {
+            steps {
+                echo '🔨 Pushing server image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+    }
+    // =========================
+    // NOTIFICATIONS
+    // =========================
+    
+    post {
+        always {
+            script {
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+                def bannerColor = pipelineStatus.toUpperCase() == 'SUCCESS' ? 'green' : 'red'
+
+                def body = """
+                    <html>
+                    <body>
+                    <div style="border: 4px solid ${bannerColor}; padding: 10px;">
+                    <h2>${jobName} - Build ${buildNumber}</h2>
+                    <div style="background-color: ${bannerColor}; padding: 10px;">
+                    <h3 style="color: white;">Pipeline Status: ${pipelineStatus.toUpperCase()}</h3>
+                    </div>
+                    <p>Check the <a href="${BUILD_URL}">console output</a>.</p>
+                    </div>
+                    </body>
+                    </html>
+                """
+                emailext (
+                    subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus.toUpperCase()}",
+                    body: body,
+                    to: 'elansarioumaima93@gmail.com',
+                    from: 'jenkins@example.com',
+                    replyTo: 'jenkins@example.com',
+                    mimeType: 'text/html',
+                    attachmentsPattern: 'trivy-*.html'
+                    )
+            }
+            
+        }
+    }
+}
+
