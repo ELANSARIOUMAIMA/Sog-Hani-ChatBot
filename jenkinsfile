@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    options {
+        timestamps()        // ← shows time for each step
+        timeout(time: 2, unit: 'HOURS')  // ← stop if takes too long
+    }
     tools {
         nodejs 'NodeJS-20.19.0'  
     }
@@ -7,7 +11,8 @@ pipeline {
     environment{
         IMAGE_TAG="v${BUILD_NUMBER}"
         SCANNER_HOME= tool 'sonar-scanner'
-        NEXUS_IP     = '54.197.2.89'
+        NEXUS_IP     = '54.164.53.111'
+        DOCKERHUB_USERNAME = 'elansarioumaima'
     }
 
     stages {
@@ -82,7 +87,7 @@ pipeline {
                 echo '🔨 Building backend image...'
                 script{
                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
-                        sh "docker build -t elansarioumaima/soghani-chatbot-backend:${IMAGE_TAG} ./backend"
+                        sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG} ./backend"
                     }
                 }
             }
@@ -92,7 +97,7 @@ pipeline {
         stage('Backend - Docker Image Scan') {
             steps {
                 echo '🔍 Scanning backend image...'
-                sh "trivy image --format table -o trivy-backend-image-report.html elansarioumaima/soghani-chatbot-backend:${IMAGE_TAG}"
+                sh "trivy image --format table -o trivy-backend-image-report.html ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG}"
             }
         }
         // BACKEND PUSHING DOCKER IMAGE
@@ -101,7 +106,7 @@ pipeline {
                 echo '🔨 Pushing backend image...'
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
-                        sh "docker push elansarioumaima/soghani-chatbot-backend:${IMAGE_TAG}"
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-chatbot-backend:${IMAGE_TAG}"
                     }
                 }
             }
@@ -178,7 +183,7 @@ pipeline {
                 echo '🔨 Building backend image...'
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
-                        sh "docker build -t elansarioumaima/soghani-frontend:${IMAGE_TAG} ./frontend"
+                        sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG} ./frontend"
                     }
                 }
             }
@@ -189,7 +194,7 @@ pipeline {
         stage('Frontend - Docker Image Scan') {
             steps {
                 echo '🔍 Scanning frontend image...'
-                sh "trivy image --format table -o trivy-frontend-image-report.html elansarioumaima/soghani-frontend:${IMAGE_TAG}"
+                sh "trivy image --format table -o trivy-frontend-image-report.html ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG}"
             }
         }
         // FRONTEND PUSHING DOCKER IMAGE
@@ -198,7 +203,7 @@ pipeline {
                 echo '🔨 Pushing frontend image...'
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
-                        sh "docker push elansarioumaima/soghani-frontend:${IMAGE_TAG}"
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG}"
                     }
                 }
             }
@@ -271,7 +276,7 @@ pipeline {
                 echo '🔨 Building backend image...'
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
-                        sh "docker build -t elansarioumaima/soghani-server:${IMAGE_TAG} ./server"
+                        sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG} ./server"
                     }
                 }
             }
@@ -281,7 +286,7 @@ pipeline {
         stage('Server - Docker Image Scan') {
             steps {
                 echo '🔍 Scanning server image...'
-                sh "trivy image --format table -o trivy-server-image-report.html elansarioumaima/soghani-server:${IMAGE_TAG}"
+                sh "trivy image --format table -o trivy-server-image-report.html ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG}"
             }
         }
         // FRONTEND PUSHING DOCKER IMAGE
@@ -290,7 +295,7 @@ pipeline {
                 echo '🔨 Pushing server image...'
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
-                        sh "docker push elansarioumaima/soghani-server:${IMAGE_TAG}"
+                        sh "docker push ${DOCKERHUB_USERNAME}/soghani-server:${IMAGE_TAG}"
                     }
                 }
             }
@@ -299,13 +304,38 @@ pipeline {
     // =========================
     // NOTIFICATIONS
     // =========================
+    
     post {
-        success{
-             echo '✅ CI Pipeline succeeded!'
-            
-        }
-        failure{
-            echo '❌ CI Pipeline failed!'
+        always {
+            script {
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+                def bannerColor = pipelineStatus.toUpperCase() == 'SUCCESS' ? 'green' : 'red'
+
+                def body = """
+                    <html>
+                    <body>
+                    <div style="border: 4px solid ${bannerColor}; padding: 10px;">
+                    <h2>${jobName} - Build ${buildNumber}</h2>
+                    <div style="background-color: ${bannerColor}; padding: 10px;">
+                    <h3 style="color: white;">Pipeline Status: ${pipelineStatus.toUpperCase()}</h3>
+                    </div>
+                    <p>Check the <a href="${BUILD_URL}">console output</a>.</p>
+                    </div>
+                    </body>
+                    </html>
+                """
+                emailext (
+                    subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus.toUpperCase()}",
+                    body: body,
+                    to: 'elansarioumaima93@gmail.com',
+                    from: 'jenkins@example.com',
+                    replyTo: 'jenkins@example.com',
+                    mimeType: 'text/html',
+                    attachmentsPattern: 'trivy-*.html'
+                    )
+            }
             
         }
     }
