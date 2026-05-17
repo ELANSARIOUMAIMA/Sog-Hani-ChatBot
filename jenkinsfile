@@ -1,0 +1,167 @@
+pipeline {
+    agent any
+    
+    environment{
+        IMAGE_TAG="v${BUILD_NUMBER}"
+    }
+
+    stages {
+        // =========================
+        // CHECKOUT
+        // =========================
+       
+        stage('Git Checkout') {
+            steps {
+                git branch: 'develop', credentialsId: 'github-credentials', url: 'https://github.com/ELANSARIOUMAIMA/Sog-Hani-ChatBot'
+            }
+        }
+        // =========================
+        // BACKEND SERVICE
+        // =========================
+        
+       
+        
+        // BACKEND SCAN
+        stage('Backend File System Scan') {
+            steps {
+                 echo '🔍 Scanning backend...'
+                 sh "trivy fs --format table -o trivy-fs-backend-report.html ./backend"
+            }
+        }
+        // BACKEND BUILDING DOCKER IMAGE
+         stage('Backend - Build docker image') {
+            steps {
+                echo '🔨 Building backend image...'
+                script{
+                   withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker build -t elansarioumaima/soghani-chatbot-backend:${IMAGE_TAG} ./backend"
+                    }
+                }
+            }
+        }
+         // BACKEND SCANING DOCKER IMAGE
+        
+        stage('Backend - Docker Image Scan') {
+            steps {
+                echo '🔍 Scanning backend image...'
+                sh "trivy image --format table -o trivy-backend-image-report.html elansarioumaima/soghani-chatbot-backend:${IMAGE_TAG}"
+            }
+        }
+        // BACKEND PUSHING DOCKER IMAGE
+         stage('Backend -Push docker image') {
+            steps {
+                echo '🔨 Pushing backend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker push elansarioumaima/soghani-chatbot-backend:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+         
+        
+        // =========================
+        // FRONTEND SERVICE
+        // =========================
+        
+       
+        
+        // FRONTEND SCAN
+        stage('frontend File System Scan') {
+            steps {
+                dir('frontend'){
+                    sh "trivy fs --format table -o trivy-fs-frontend-report.html ."
+                }
+            }
+        }
+         // FRONTEND BUILDING DOCKER IMAGE
+         stage('Frontend - Build docker image') {
+            steps {
+                echo '🔨 Building backend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker build -t elansarioumaima/soghani-frontend:${IMAGE_TAG} ./frontend"
+                    }
+                }
+            }
+        }
+        
+         // FRONTEND SCANING DOCKER IMAGE
+        
+        stage('Frontend - Docker Image Scan') {
+            steps {
+                echo '🔍 Scanning frontend image...'
+                sh "trivy image --format table -o trivy-frontend-image-report.html elansarioumaima/soghani-frontend:${IMAGE_TAG}"
+            }
+        }
+        // FRONTEND PUSHING DOCKER IMAGE
+         stage('Frontend -Push docker image') {
+            steps {
+                echo '🔨 Pushing frontend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker push elansarioumaima/soghani-frontend:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+        
+        // =========================
+        // SERVER SERVICE
+        // =========================
+        
+        
+        // SERVER SCAN
+        stage('server File System Scan ') {
+            steps {
+                dir('server'){
+                    sh "trivy fs --format table -o trivy-fs-server-report.html ."
+                }
+            }
+        }
+        // SERVER BUILDING DOCKER IMAGE
+         stage('Server - Build docker image') {
+            steps {
+                echo '🔨 Building backend image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker build -t elansarioumaima/soghani-server:${IMAGE_TAG} ./server"
+                    }
+                }
+            }
+        }
+         // SERVER SCANING DOCKER IMAGE
+        
+        stage('Server - Docker Image Scan') {
+            steps {
+                echo '🔍 Scanning server image...'
+                sh "trivy image --format table -o trivy-server-image-report.html elansarioumaima/soghani-server:${IMAGE_TAG}"
+            }
+        }
+        // FRONTEND PUSHING DOCKER IMAGE
+         stage('Server -Push docker image') {
+            steps {
+                echo '🔨 Pushing server image...'
+                script{
+                    withDockerRegistry(credentialsId: 'dockerhub-credentials') {
+                        sh "docker push elansarioumaima/soghani-server:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+    }
+    // =========================
+    // NOTIFICATIONS
+    // =========================
+    post {
+        success{
+             echo '✅ CI Pipeline succeeded!'
+            
+        }
+        failure{
+            echo '❌ CI Pipeline failed!'
+            
+        }
+    }
+}
+
