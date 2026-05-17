@@ -1,8 +1,13 @@
 pipeline {
     agent any
+    tools {
+        nodejs 'NodeJS-20.19.0'  
+    }
     
     environment{
         IMAGE_TAG="v${BUILD_NUMBER}"
+        SCANNER_HOME= tool 'sonar-scanner'
+        NEXUS_IP     = '54.197.2.89'
     }
 
     stages {
@@ -20,7 +25,24 @@ pipeline {
         // =========================
         
        
-        
+        stage('Backend - Install Dependencies') {
+            steps {
+                
+                dir('backend') {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'nexus-credentials',
+                        usernameVariable: 'NEXUS_USER',
+                        passwordVariable: 'NEXUS_PASS'
+                        )]){
+                            sh """
+                            pip3 install -r requirements.txt --break-system-packages \
+                            --index-url http://${NEXUS_IP}:8081/repository/pypi-proxy/simple/ \
+                            --trusted-host ${NEXUS_IP}
+                            """
+                        }
+                }
+            }
+        }
         // BACKEND SCAN
         stage('Backend File System Scan') {
             steps {
@@ -28,6 +50,32 @@ pipeline {
                  sh "trivy fs --format table -o trivy-fs-backend-report.html ./backend"
             }
         }
+        // BACKEND CODE QUALITY
+        stage('SonarQube Analysis - Backend') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                -Dsonar.projectName=soghani-chatbot-backend \
+                -Dsonar.projectKey=soghani-chatbot-backend \
+                -Dsonar.sources=./backend'''
+                    
+                }
+            }
+        }
+        // BACKEND PASS/FAIL
+        stage('Quality Gate - Backend') {
+    steps {
+        script {
+            waitForQualityGate(
+                abortPipeline: false, 
+                credentialsId: 'sonarqube-token'
+                ) 
+        }
+    }
+}
+        
+        
+        
         // BACKEND BUILDING DOCKER IMAGE
          stage('Backend - Build docker image') {
             steps {
@@ -65,7 +113,33 @@ pipeline {
         // =========================
         
        
-        
+       stage('Frontend - Install Dependencies') {
+    steps {
+        dir('frontend') {
+
+            withCredentials([usernamePassword(
+                credentialsId: 'nexus-credentials',
+                usernameVariable: 'NEXUS_USER',
+                passwordVariable: 'NEXUS_PASS'
+            )]) {
+
+                sh """
+                cat > ~/.npmrc <<EOF
+                registry=http://${NEXUS_IP}:8081/repository/npm-proxy/
+                
+                //${NEXUS_IP}:8081/repository/npm-proxy/:username=\$NEXUS_USER
+                //${NEXUS_IP}:8081/repository/npm-proxy/:_password=\$(echo -n \$NEXUS_PASS | base64)
+                //${NEXUS_IP}:8081/repository/npm-proxy/:email=jenkins@example.com
+                //${NEXUS_IP}:8081/repository/npm-proxy/:always-auth=true
+                EOF
+                
+                npm install
+                """
+            }
+        }
+    }
+}
+
         // FRONTEND SCAN
         stage('frontend File System Scan') {
             steps {
@@ -74,6 +148,30 @@ pipeline {
                 }
             }
         }
+        // FRONTEND CODE QUALITY
+        stage('SonarQube Analysis - Frontend') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                -Dsonar.projectName=soghani-chatbot-frontend \
+                -Dsonar.projectKey=soghani-chatbot-frontend \
+                -Dsonar.sources=./frontend'''
+                    
+                }
+            }
+        }
+        // FRONTEND PASS/FAIL
+        stage('Quality Gate - Frontend') {
+            steps {
+                script {
+                    waitForQualityGate (
+                        abortPipeline: false, 
+                        credentialsId: 'sonarqube-token'
+                        )
+                }
+            }
+        }
+        
          // FRONTEND BUILDING DOCKER IMAGE
          stage('Frontend - Build docker image') {
             steps {
@@ -110,12 +208,60 @@ pipeline {
         // SERVER SERVICE
         // =========================
         
-        
+       stage('Server - Install Dependencies') {
+    steps {
+        dir('server') {
+            withCredentials([usernamePassword(
+                credentialsId: 'nexus-credentials',
+                usernameVariable: 'NEXUS_USER',
+                passwordVariable: 'NEXUS_PASS'
+            )]) {
+
+               
+                sh """
+                cat > ~/.npmrc <<EOF
+                registry=http://${NEXUS_IP}:8081/repository/npm-proxy/
+                
+                //${NEXUS_IP}:8081/repository/npm-proxy/:username=\$NEXUS_USER
+                //${NEXUS_IP}:8081/repository/npm-proxy/:_password=\$(echo -n \$NEXUS_PASS | base64)
+                //${NEXUS_IP}:8081/repository/npm-proxy/:email=jenkins@example.com
+                //${NEXUS_IP}:8081/repository/npm-proxy/:always-auth=true
+                EOF
+                
+                npm install
+                """
+            }
+        }
+    }
+}
         // SERVER SCAN
         stage('server File System Scan ') {
             steps {
                 dir('server'){
                     sh "trivy fs --format table -o trivy-fs-server-report.html ."
+                }
+            }
+        }
+        // SERVER CODE QUALITY
+        stage('SonarQube Analysis - Server') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                -Dsonar.projectName=soghani-chatbot-server \
+                -Dsonar.projectKey=soghani-chatbot-server \
+                -Dsonar.sources=./server'''
+                    
+                }
+            }
+        }
+        // SERVER PASS/FAIL
+        stage('Quality Gate - Server') {
+            steps {
+                script {
+                    waitForQualityGate (
+                        abortPipeline: false, 
+                        credentialsId: 'sonarqube-token'
+                        )
                 }
             }
         }
