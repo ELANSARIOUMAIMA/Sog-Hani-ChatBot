@@ -2,19 +2,21 @@ services:
 
   backend:
     build: ./backend
-    image: soghani-chatbot-backend:1
-    container_name: soghani-backend
+    image: elanssarioumaima/soghani-chatbot-backend:latest
+    container_name: soghani-chatbot-backend
     ports:
       - "8000:5000"
-    env_file:
-      - ./backend/.env
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - FLASK_ENV=production
+      - PORT=5000
     restart: always
     networks:
       - soghani-network
 
   frontend:
     build: ./frontend
-    image: soghani-frontend:1
+    image: elanssarioumaima/soghani-frontend:latest
     container_name: soghani-frontend
     ports:
       - "8001:80"
@@ -27,12 +29,14 @@ services:
 
   server:
     build: ./server
-    image: soghani-server:1
+    image: elanssarioumaima/soghani-server:latest
     container_name: soghani-server
     ports:
       - "8002:4000"
-    env_file:
-      - ./server/.env
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - MONGODB_URI=${MONGODB_URI}
+      - PORT=4000
     restart: always
     networks:
       - soghani-network
