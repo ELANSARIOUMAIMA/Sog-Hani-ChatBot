@@ -2,7 +2,7 @@ services:
 
   backend:
     build: ./backend
-    image: elanssarioumaima/soghani-chatbot-backend:latest
+    image: elansarioumaima/soghani-chatbot-backend:latest
     container_name: soghani-chatbot-backend
     ports:
       - "8000:5000"
@@ -16,7 +16,7 @@ services:
 
   frontend:
     build: ./frontend
-    image: elanssarioumaima/soghani-frontend:latest
+    image: elansarioumaima/soghani-frontend:latest
     container_name: soghani-frontend
     ports:
       - "8001:80"
@@ -29,7 +29,7 @@ services:
 
   server:
     build: ./server
-    image: elanssarioumaima/soghani-server:latest
+    image: elansarioumaima/soghani-server:latest
     container_name: soghani-server
     ports:
       - "8002:4000"
