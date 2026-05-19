@@ -185,7 +185,10 @@ pipeline {
                 echo '🔨 Building backend image...'
                 script{
                     withDockerRegistry(credentialsId: 'dockerhub-credentials') {
-                        sh "docker build -t ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG} ./frontend"
+                        sh """docker build \
+                            --build-arg VITE_API_URL=http://100.30.176.220:30500/api/ask \
+                            --build-arg VITE_BACKEND_URL=http://100.30.176.220:30400 \
+                            -t ${DOCKERHUB_USERNAME}/soghani-frontend:${IMAGE_TAG} ./frontend"""
                         
                     }
                 }
